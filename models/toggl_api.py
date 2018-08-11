@@ -13,9 +13,6 @@ from base64 import b64encode
 from openerp import models, fields, api
 from openerp.exceptions import Warning
 
-import logging
-logger = logging.getLogger(__name__)
-
 class TogglApi(models.Model):
     _name = 'toggl.api'
 

@@ -125,11 +125,11 @@ class hr_timesheet_sheet(models.Model):
             if not odoo_te:
                 # Create  time entry
                 self.env['hr.analytic.timesheet'].create(hr_timesheet)
-                logger.warning("Create time entry: %s" % (hr_timesheet['name']))
+                logger.debug("Create time entry: %s" % (hr_timesheet['name']))
             elif not odoo_te.invoice_id:
                 # Update time entry
                 odoo_te.write(hr_timesheet)
-                logger.warning("Update time entry: %s" % (hr_timesheet['name']))
+                logger.debug("Update time entry: %s" % (hr_timesheet['name']))
 
     @api.multi
     def sync_projects_to_toggl(self):
@@ -254,7 +254,7 @@ class hr_timesheet_sheet(models.Model):
                 response = self.toggl.update_project(project['id'], {
                     'active': False,
                 })
-                logger.warning("Deactivate project: %s" % project['name'])
+                logger.debug("Deactivate project: %s" % project['name'])
 
     def create_toggl_project(self, params):
         # Project name is the only field we have access to when using Toggl free tier,
@@ -277,14 +277,14 @@ class hr_timesheet_sheet(models.Model):
 
             # Create Toggl project
             response = self.toggl.create_project(project)
-            logger.warning("Create project: %s" % project_name)
+            logger.debug("Create project: %s" % project_name)
             return response['id']
         elif project_name != toggl_project[0]['name']:
             response = self.toggl.update_project(toggl_project[0]['id'], {
                 'active': True,
                 'name': project_name,
             })
-            logger.warning("Update project: %s != %s" % (project_name, toggl_project[0]['name']))
+            logger.debug("Update project: %s != %s" % (project_name, toggl_project[0]['name']))
             return response['id']
         else:
             return toggl_project[0]['id']
