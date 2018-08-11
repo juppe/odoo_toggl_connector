@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data>
+		<record id="toggl_hr_timesheet_additions" model="ir.ui.view">
+			<field name="name">hr.timesheet.sheet.form.inherit</field>
+			<field name="model">hr_timesheet_sheet.sheet</field>
+			<field name="inherit_id" ref="hr_timesheet_sheet.hr_timesheet_sheet_form"/>
+			<field name="arch" type="xml">
+				<xpath expr="//header/button[@name='cancel']" position="after">
+					<button groups="base.group_hr_user" name="sync_time_entries_from_toggl" states="draft" string="Fetch timesheet from Toggl" type="object"/>
+					<button groups="base.group_hr_user" name="sync_projects_to_toggl" states="draft" string="Sync projects to Toggl" type="object"/>
+				</xpath>
+			</field>
+		</record>
+	</data>
+</openerp>
