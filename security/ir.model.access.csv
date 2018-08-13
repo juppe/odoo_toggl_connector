@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_toggl_api,toggl.api.user,model_toggl_api,odoo_toggl_connector.group_toggl_connector,1,1,1,1

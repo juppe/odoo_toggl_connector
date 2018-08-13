@@ -22,6 +22,8 @@
         'hr_timesheet_sheet',
     ],
     'data': [
+        'security/toggl_security.xml',
+        'security/ir.model.access.csv',
         'view/hr_timesheet_sheet.xml',
         'view/res_users.xml',
     ],

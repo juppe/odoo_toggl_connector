@@ -7,8 +7,18 @@
 			<field name="inherit_id" ref="hr_timesheet_sheet.hr_timesheet_sheet_form"/>
 			<field name="arch" type="xml">
 				<xpath expr="//header/button[@name='cancel']" position="after">
-					<button groups="base.group_hr_user" name="sync_time_entries_from_toggl" states="draft" string="Fetch timesheet from Toggl" type="object"/>
-					<button groups="base.group_hr_user" name="sync_projects_to_toggl" states="draft" string="Sync projects to Toggl" type="object"/>
+					<button 
+						groups="odoo_toggl_connector.group_toggl_connector" 
+						name="sync_time_entries_from_toggl" 
+						states="draft" 
+						string="Fetch time entries from Toggl" 
+						type="object"/>
+					<button 
+						groups="odoo_toggl_connector.group_toggl_connector" 
+						name="sync_projects_to_toggl" 
+						states="draft" 
+						string="Sync projects to Toggl" 
+						type="object"/>
 				</xpath>
 			</field>
 		</record>

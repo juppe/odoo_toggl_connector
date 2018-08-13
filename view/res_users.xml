@@ -7,7 +7,7 @@
             <field name="inherit_id" ref="base.view_users_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='messaging']" position="after">
-                    <group name="toggl" string="Toggl API">
+                    <group name="toggl" string="Toggl API" groups="odoo_toggl_connector.group_toggl_connector">
                         <field name="toggl_api_token"/>
                         <field name="toggl_workspace_id"/>
                         <field name="toggl_analytic_account"/>
