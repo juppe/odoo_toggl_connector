@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    ODOO Addon module by Johan Tötterman
-#    Copyright (C) 2018 Johan Tötterman
+#    Copyright (C) 2019 Johan Tötterman
 #
 ##############################################################################
 
@@ -16,16 +16,17 @@
     'maintainer': 'Johan Tötterman',
     'website': 'http://www.sprintit.fi',
     'depends': [
+        'base',
         'project',
-        'project_issue',
         'hr_timesheet',
-        'hr_timesheet_sheet',
     ],
     'data': [
-        'security/toggl_security.xml',
+        'security/toggl_connector_security.xml',
         'security/ir.model.access.csv',
-        'view/hr_timesheet_sheet.xml',
+        'view/toggl_connector_view.xml',
+        'view/res_company.xml',
         'view/res_users.xml',
+        'wizard/toggl_entries_wizard_view.xml',
     ],
     'demo': [
     ],

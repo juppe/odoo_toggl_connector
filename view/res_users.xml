@@ -1,24 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<openerp>
-    <data>
-        <record id="toggl_res_users_additions" model="ir.ui.view">
-            <field name="name">res.users.view.users.form.inherit</field>
-            <field name="model">res.users</field>
-            <field name="inherit_id" ref="base.view_users_form"/>
-            <field name="arch" type="xml">
-                <xpath expr="//group[@name='messaging']" position="after">
-                    <group name="toggl" string="Toggl API" groups="odoo_toggl_connector.group_toggl_connector">
-                        <field name="toggl_api_token"/>
-                        <field name="toggl_workspace_id"/>
-                        <field name="toggl_analytic_account"/>
-                        <field name="toggl_skip_projects" widget="many2many">
-                            <tree>
-                                <field name="name"/>
-                            </tree>
-                        </field>
-                    </group>
-                </xpath>
-            </field>
-        </record>
-    </data>
-</openerp>
+<odoo>
+    <record id="toggl_res_users_additions" model="ir.ui.view">
+        <field name="name">toggl.res.users.additions</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='messaging']" position="after">
+                <group groups="odoo_toggl_connector.group_toggl_connector">
+                    <field name="toggl_username" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

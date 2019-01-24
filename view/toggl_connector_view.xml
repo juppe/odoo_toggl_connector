@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="toggl_connector_tree_view" model="ir.ui.view">
+        <field name="name">toggl.connector.tree.view</field>
+        <field name="model">toggl.connector</field>
+        <field name="arch" type="xml">
+            <tree string="Toggl Connector">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="toggl_connector_form_view" model="ir.ui.view">
+        <field name="name">toggl.connector.form.view</field>
+        <field name="model">toggl.connector</field>
+        <field name="arch" type="xml">
+            <form string="Toggl Connector">
+                <header>
+                    <button name="sync_projects_to_toggl" string="Sync Projects and Tasks to Toggl" type="object"  class="btn-primary"/>
+                </header>
+                <group>
+                    <field name="name"/>
+                    <field name="toggl_api_token"/>
+                    <field name="toggl_workspace_id"/>
+                    <field name="toggl_analytic_account"/>
+                    <field name="toggl_skip_projects"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="toggl_connector_action" model="ir.actions.act_window">
+        <field name="name">Toggl Connector</field>
+        <field name="res_model">toggl.connector</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="toggl_connector_tree_view"/>
+    </record>
+
+    <menuitem id="toggl_connector" name="Toggl Connector Settings" action="toggl_connector_action" parent="base.menu_custom" sequence="55" groups="base.group_no_one"/>
+</odoo>

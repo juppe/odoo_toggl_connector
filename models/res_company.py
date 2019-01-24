@@ -8,7 +8,7 @@
 
 from odoo import models, fields, api
 
-class ResUsers(models.Model):
-    _inherit = "res.users"
+class ResCompany(models.Model):
+    _inherit = "res.company"
 
-    toggl_username = fields.Char('Toggl Username', help='Toggl Username (Email)')
+    toggl_connector_id = fields.Many2one('toggl.connector', 'Toggl Connector ID', help='Toggl Connector ID')

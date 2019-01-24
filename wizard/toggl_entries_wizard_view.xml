@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="toggl_wizard_form_view" model="ir.ui.view">
+        <field name="name">toggl.wizard.form.view</field>
+        <field name="model">toggl.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Toggl Time Entries">
+                <group>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <footer>
+                    <button name="import_time_entries" string="Import Time Entries" type="object"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="toggl_wizard_action" model="ir.actions.act_window">
+        <field name="name">Import Toggl Time Entries</field>
+        <field name="res_model">toggl.wizard</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="toggl_wizard_form_view"/>
+    </record>
+
+    <menuitem id="toggl_wizard" name="Toggl Time Entries" action="toggl_wizard_action" parent="hr_timesheet.menu_hr_time_tracking"/>
+</odoo>

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    ODOO Open Source Management Solution
-#
-#    ODOO Addon module by Sprintit Ltd
-#    Copyright (C) 2016 Sprintit Ltd (<http://sprintit.fi>).
+#    ODOO Addon module by Johan Tötterman
+#    Copyright (C) 2019 Johan Tötterman
 #
 ##############################################################################
 
 from . import models
+from . import wizard

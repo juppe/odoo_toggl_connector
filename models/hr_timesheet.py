@@ -6,9 +6,10 @@
 #
 ##############################################################################
 
-from odoo import models, fields, api
+from odoo import api, fields, models
 
-class ResUsers(models.Model):
-    _inherit = "res.users"
 
-    toggl_username = fields.Char('Toggl Username', help='Toggl Username (Email)')
+class AccountAnalyticLine(models.Model):
+    _inherit = 'account.analytic.line'
+
+    toggl_entry_id = fields.Integer("Toggl Time Entry Id", copy=False)

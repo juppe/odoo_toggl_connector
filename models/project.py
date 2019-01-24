@@ -8,7 +8,12 @@
 
 from odoo import models, fields, api
 
-class ResUsers(models.Model):
-    _inherit = "res.users"
+class Project(models.Model):
+    _inherit = "project.project"
 
-    toggl_username = fields.Char('Toggl Username', help='Toggl Username (Email)')
+    toggl_project_id = fields.Integer("Toggl Project Id", copy=False)
+
+class Task(models.Model):
+    _inherit = "project.task"
+
+    toggl_task_id = fields.Integer("Toggl Task Id", copy=False)
