@@ -12,3 +12,4 @@ class ResUsers(models.Model):
     _inherit = "res.users"
 
     toggl_username = fields.Char('Toggl Username', help='Toggl Username (Email)')
+    toggl_last_fetch = fields.Date('Last date Toggl Timesheets were fetched')

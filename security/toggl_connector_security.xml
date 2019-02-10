@@ -1,32 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <record id="group_toggl_connector" model="res.groups">
-            <field name="name">Toggl Connector</field>
-        </record>
+    <record model="ir.module.category" id="module_category_toggl_connector">
+        <field name="name">Toggl Connector</field>
+        <field name="description">Connector to Toggl Time Tracking Tool</field>
+        <field name="sequence">25</field>
+    </record>
 
+    <record id="group_toggl_connector_user" model="res.groups">
+        <field name="name">Toggl Connector User</field>
+        <field name="category_id" ref="module_category_toggl_connector"/>
+        <field name="comment">The user will be able to fetch their time entries from Toggl</field>
+    </record>
 
-        <record model="ir.module.category" id="module_category_toggl_connector">
-            <field name="name">Toggl Connector</field>
-            <field name="description">Connector to Toggl Time Tracking Tool</field>
-            <field name="sequence">25</field>
-        </record>
+    <record id="group_toggl_connector_manager" model="res.groups">
+        <field name="name">Toggl Connector Manager</field>
+        <field name="category_id" ref="module_category_toggl_connector"/>
+        <field name="implied_ids" eval="[(4, ref('group_toggl_connector_user'))]"/>
+        <field name="comment">The user will have access to Toggl Connector configuration.</field>
+    </record>
 
-        <record id="group_toggl_connector_user" model="res.groups">
-            <field name="name">Toggl Connector User</field>
-            <field name="category_id" ref="module_category_toggl_connector"/>
-            <field name="comment">The user will be able to fetch their time entries from Toggl</field>
-        </record>
-
-        <record id="group_toggl_connector_manager" model="res.groups">
-            <field name="name">Toggl Connector Manager</field>
-            <field name="category_id" ref="module_category_toggl_connector"/>
-            <field name="implied_ids" eval="[(4, ref('group_toggl_connector_user'))]"/>
-            <field name="comment">The user will have access to Toggl Connector configuration.</field>
-        </record>
-
-        <record model="res.users" id="base.user_root">
-            <field eval="[(4,ref('group_toggl_connector_manager'))]" name="groups_id"/>
-        </record>
-    </data>
+    <record model="res.users" id="base.user_root">
+        <field eval="[(4,ref('group_toggl_connector_manager'))]" name="groups_id"/>
+    </record>
 </odoo>

@@ -12,4 +12,4 @@ from odoo import api, fields, models
 class AccountAnalyticLine(models.Model):
     _inherit = 'account.analytic.line'
 
-    toggl_entry_id = fields.Integer("Toggl Time Entry Id", copy=False)
+    toggl_entry_id = fields.Integer("Toggl Time Entry Id", copy=False, index=True)

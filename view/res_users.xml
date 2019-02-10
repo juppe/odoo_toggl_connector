@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="base.view_users_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group[@name='messaging']" position="after">
-                <group groups="odoo_toggl_connector.group_toggl_connector">
+                <group groups="odoo_toggl_connector.group_toggl_connector_user">
                     <field name="toggl_username" />
                 </group>
             </xpath>

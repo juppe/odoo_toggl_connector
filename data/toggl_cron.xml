@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<odoo>
+    <record id="sync_projects_to_toggl_cron" model="ir.cron">
+        <field name="name">Toggl Connector: Sync Projects and Tasks to Toggl</field>
+        <field name="model_id" ref="model_toggl_connector"/>
+        <field name="state">code</field>
+        <field name="code">model.sync_to_toggl_cron()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

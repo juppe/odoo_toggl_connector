@@ -16,13 +16,13 @@
         <field name="arch" type="xml">
             <form string="Toggl Connector">
                 <header>
-                    <button name="sync_projects_to_toggl" string="Sync Projects and Tasks to Toggl" type="object"  class="btn-primary"/>
+                    <button name="sync_projects_to_toggl_button" string="Sync Projects and Tasks to Toggl" type="object"  class="btn-primary"/>
                 </header>
                 <group>
                     <field name="name"/>
                     <field name="toggl_api_token"/>
                     <field name="toggl_workspace_id"/>
-                    <field name="toggl_analytic_account"/>
+                    <field name="toggl_default_project"/>
                     <field name="toggl_skip_projects"/>
                 </group>
             </form>
@@ -37,5 +37,12 @@
         <field name="view_id" ref="toggl_connector_tree_view"/>
     </record>
 
-    <menuitem id="toggl_connector" name="Toggl Connector Settings" action="toggl_connector_action" parent="base.menu_custom" sequence="55" groups="base.group_no_one"/>
+    <menuitem
+        id="toggl_connector"
+        name="Toggl Connector Settings"
+        action="toggl_connector_action"
+        parent="base.menu_custom"
+        sequence="55"
+        groups="odoo_toggl_connector.group_toggl_connector_manager"
+    />
 </odoo>

@@ -8,7 +8,7 @@
 
 from odoo import models, fields, api
 
-class ResCompany(models.Model):
-    _inherit = "res.company"
+class ResPartner(models.Model):
+    _inherit = "res.partner"
 
-    toggl_connector_id = fields.Many2one('toggl.connector', 'Toggl Connector ID', help='Toggl Connector ID')
+    toggl_partner_id = fields.Integer("Toggl Partner Id", copy=False, index=True)

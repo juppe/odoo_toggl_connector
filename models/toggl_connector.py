@@ -21,12 +21,41 @@ class TogglConnector(models.Model):
     _name = "toggl.connector"
     _description = "Toggl Connector"
 
+    _sql_constraints = [('toggl_company_uniq',
+                         'unique(company_id)',
+                         'Only one Toggl connection per company is allowed')]
+
     name = fields.Char('Connector Name')
-    toggl_api_token = fields.Char('Toggl API token', help='Toggl API token. The API token can be found on the "My Profile" page in Toggl.', required=True)
-    toggl_workspace_id = fields.Integer('Toggl workspace ID', help='Toggl workspace ID. The workspace ID can be found as a part of the url e.g. when navigating to the Workspace Settings page in Toggl.', required=True)
-    toggl_analytic_account = fields.Many2one('account.analytic.account', string='Default analytic account', help='Default analytic account for Toggl time entries. (Used when Project/Task is not chosen on the time entry in Toggl).', required=True)
-    toggl_skip_projects = fields.Many2many('project.project', string='Projects to skip', help='Skip these projects when syncing to Toggl.')
-    last_cron_run = fields.Datetime('Latest run', help="Date of lastest cron run")
+    company_id = fields.Many2one(
+        'res.company',
+        'Company',
+        required=True,
+        default=lambda self: self.env['res.company']._company_default_get()
+    )
+    toggl_api_token = fields.Char('Toggl API token',
+        help="""Toggl API token of Toggl Worskspace Admin.
+            The API token can be found on the "My Profile" page in Toggl.""",
+        required=True
+    )
+    toggl_workspace_id = fields.Integer('Toggl workspace ID',
+        help="""Toggl workspace ID. The workspace ID can be found as a
+            part of the url e.g. when navigating to
+            the Workspace Settings page in Toggl.""",
+        required=True
+    )
+    toggl_default_project = fields.Many2one('project.project',
+        string='Default project',
+        help="""Default project for Toggl time entries
+            that are without a project in Toggl.""",
+        required=True
+    )
+    toggl_skip_projects = fields.Many2many('project.project',
+        string='Projects to skip',
+        help='Skip these projects when syncing to Toggl.'
+    )
+    last_cron_run = fields.Datetime('Latest run',
+        help="Date of lastest cron run"
+    )
 
     # Default headers for requests
     headers = {
@@ -36,13 +65,14 @@ class TogglConnector(models.Model):
         'User-Agent': 'Odoo_TogglAPI',
     }
 
-    # All Toggl projects
+    # All Toggl projects, clients and tasks
+    toggl_clients = []
     toggl_projects = []
+    toggl_tasks = {}
 
     @api.one
-    def sync_time_entries_from_toggl(self, date_from, date_to):
+    def sync_time_entries_from_toggl(self, date_from, date_to, update_entries):
         user = self.env['res.users'].browse(self.env.uid)
-        toggl = user.company_id.toggl_connector_id
         employee = self.env['hr.employee'].search([('user_id', '=', user.id)])
 
         if not employee:
@@ -50,10 +80,10 @@ class TogglConnector(models.Model):
         elif len(employee) > 1:
             raise Warning ('Please link your Odoo user to exactly one Employee.')
 
-        toggl.toggl_api_init()
+        self.toggl_api_init()
 
         # Fetch all workspace users
-        toggl_users = toggl.users(self.toggl_workspace_id)
+        toggl_users = self.users(self.toggl_workspace_id)
 
         # Pick correct Toggl user
         toggl_user = next(filter(lambda c: c['email']==user.toggl_username, toggl_users), None)
@@ -73,7 +103,7 @@ class TogglConnector(models.Model):
 
         # Get detailed report of Toggl time entries, one page at a time
         while True:
-            time_entries_page = toggl.detailed_report(params=report_params)
+            time_entries_page = self.detailed_report(params=report_params)
             report_params['page']+=1
             time_entries += time_entries_page['data']
 
@@ -95,23 +125,24 @@ class TogglConnector(models.Model):
                 'name': time_entry['description'],
                 'employee_id': employee.id,
                 'date': time_entry['start'][0:10],
-                'account_id': toggl.toggl_analytic_account.id,
+                'project_id': self.toggl_default_project.id,
+                'account_id': self.toggl_default_project.analytic_account_id.id,
                 'unit_amount': duration,
                 'toggl_entry_id': time_entry['id'],
             }
 
-            # Match Toggl Project to Odoo Project or Task
-            if time_entry['project'][0:2] == "T:" and time_entry['pid']:
+            if time_entry['tid']:
+                # Match Toggl Task to Odoo Task and Project
                 task = self.env['project.task'].search([
-                    ('toggl_task_id', '=', time_entry['pid'])
+                    ('toggl_task_id', '=', time_entry['tid'])
                 ], limit=1)
                 if task:
                     timesheet['task_id'] = task.id
                     if task.project_id:
                         timesheet['project_id'] =  task.project_id.id
                         timesheet['account_id'] =  task.project_id.analytic_account_id.id
-
-            elif time_entry['project'][0:2] == "P:" and time_entry['pid']:
+            elif time_entry['pid']:
+                # Match Toggl Project to Odoo Project
                 project = self.env['project.project'].search([
                     ('toggl_project_id', '=', time_entry['pid'])
                 ], limit=1)
@@ -126,91 +157,131 @@ class TogglConnector(models.Model):
 
             if not odoo_te:
                 # Create  time entry
-                logger.warning("Create time entry: %s" % (timesheet['name']))
+                logger.debug("Toggl: Create time entry: %s" % (timesheet['name']))
                 self.env['account.analytic.line'].create(timesheet)
-            else:
+            elif update_entries:
                 # Update time entry
-                logger.warning("Update time entry: %s" % (timesheet['name']))
-                odoo_te.write(timesheet)
+                logger.debug("Toggl: Update time entry: %s" % (timesheet['name']))
+                try:
+                    odoo_te.write(timesheet)
+                except Exception as e:
+                    logger.warning("Toggl: Update time entry failed! %s" % (e))
+
+    @api.one
+    def sync_projects_to_toggl_button(self):
+        user = self.env['res.users'].browse(self.env.uid)
+        toggl = self.env['toggl.connector'].search([
+            ('company_id', '=', user.company_id.id)
+        ])
+        toggl.sync_projects_to_toggl()
+        toggl.sync_tasks_to_toggl()
 
     @api.model
-    def sync_projects_to_toggl_cron(self, sync_all=False):
+    def sync_to_toggl_cron(self, sync_all=False):
         user = self.env['res.users'].browse(self.env.uid)
-        toggl = user.company_id.toggl_connector_id
+        toggl = self.env['toggl.connector'].search([
+            ('company_id', '=', user.company_id.id)
+        ])
 
-        if sync_all:
+        # Sync everything checked or when running sync first time, we sync all projects/tasks
+        if sync_all or not toggl.last_cron_run:
             # Sync all projects and tasks
+            logger.debug("Toggl: Sync all projects to Toggl")
             toggl.sync_projects_to_toggl()
             return
 
         # Which records to include in sync
         time_from = toggl.last_cron_run
-        logger.warning("Toggl: Cron last run: %s" % time_from)
+        logger.debug("Toggl: Cron last run: %s" % time_from)
 
         # Update timestamp
-        toggl.last_cron_run = fields.datetime.now()
+        toggl.last_cron_run = fields.Datetime.now()
 
         # Sync projects and tasks
-        toggl.with_context(time_from=time_from).sync_projects_to_toggl()
+        toggl.sync_projects_to_toggl(time_from)
+        toggl.sync_tasks_to_toggl(time_from)
 
-    @api.one
-    def sync_projects_to_toggl(self):
+    def sync_projects_to_toggl(self, time_from=False):
+        self.ensure_one()
         self.toggl_api_init()
 
-        # Only sync tasks that are touched since the last run
-        time_from = self.env.context.get('time_from', False)
+        # Fetch all clients from Toggl in one API call
+        # and keep them in a class variable
+        self.toggl_clients = self.clients(self.toggl_workspace_id)
+        if not self.toggl_clients:
+            self.toggl_clients = []
 
-        # Fetch clients from Toggl
-        toggl_clients = self.clients(self.toggl_workspace_id)
-        if not toggl_clients:
-            toggl_clients = []
-
-        # Fetch all project from Toggl in one API call
+        # Fetch all projects from Toggl in one API call
+        # and keep them in a class variable
         self.toggl_projects = self.projects(self.toggl_workspace_id, 'both')
         if not self.toggl_projects:
             self.toggl_projects = []
+
+        # Skip these projects when syncing to Toggl
+        skip_projects = self.toggl_skip_projects.mapped('name')
+
+        # Fetch all active projects from Odoo
+        projectdomain = [
+            ('active', '=', True),
+            ('name', 'not in', skip_projects),
+        ]
+
+        if time_from:
+            # Only projects that are touched since the last run
+            projectdomain.append(('write_date', '>=', time_from))
+
+        projects = self.env['project.project'].search(projectdomain)
+
+        for project in projects:
+            client_id = 0
+
+            if project.partner_id:
+                client_id = self.create_toggl_client({
+                    'name': project.partner_id.name,
+                    'toggl_id': project.partner_id.toggl_partner_id,
+                })
+                # Update Toggl Client id to partner in Odoo
+                # .sudo() because we are only touching the toggl_partner_id-field...
+                project.partner_id.sudo().write({
+                    'toggl_partner_id': client_id,
+                })
+
+            # Create Toggl project
+            toggl_pid = self.create_toggl_project({
+                'name': project.name,
+                'id': project.id,
+                'client_id': client_id,
+                'toggl_id': project.toggl_project_id,
+            })
+
+            # Update Toggl Project id to project in Odoo
+            # .sudo() because we are only touching the toggl_project_id-field...
+            project.sudo().write({
+                'toggl_project_id': toggl_pid,
+            })
+
+    def sync_tasks_to_toggl(self, time_from=False):
+        self.ensure_one()
+        self.toggl_api_init()
 
         # Fetch task types from Odoo
         # In this API we only sync tasks and issues to Toggl
         # that are in a stage that is not folded by default in Odoo's Kanban view
         task_types = self.get_task_types()
 
-        # Skip these projects when syncing to Toggl
-        skip_projects = self.toggl_skip_projects.mapped('name')
+        # Sync tasks for all active projects on Toggl
+        for toggl_project in self.toggl_projects:
+            project = self.env['project.project'].search([
+                ('toggl_project_id', '=', toggl_project['id']),
+            ])
 
-        # Fetch all projects from Odoo
-        projects = self.env['project.project'].search([
-            ('name', 'not in', skip_projects),
-        ])
+            if not project:
+                logger.debug("Toggl: Project not found in Odoo: %s" % toggl_project['name'])
+                continue
 
-        for project in projects:
-            client_id = 0
-
-            if project.partner_id:
-                cliname = project.partner_id.name
-
-                # Check if client exists in Toggl
-                client_exists = next(filter(lambda c: c['name']==cliname, toggl_clients), None)
-
-                if not client_exists:
-                    response = self.create_client({
-                        'name': cliname,
-                        'wid': self.toggl_workspace_id,
-                    })
-                    toggl_clients.append(response)
-                    client_id = response['id']
-                else:
-                    client_id = client_exists['id']
-
-            # Create Toggl project
-            toggl_pid = self.create_toggl_project({
-                'type': 'P',
-                'name': project.name,
-                'id': project.id,
-                'client_id': client_id,
-                'toggl_id': project.toggl_project_id,
-            })
-            project.toggl_project_id=toggl_pid
+            # Fecth Project tasks from Toggl and put them in class variable
+            toggl_tasks = self.project_tasks(project.toggl_project_id)
+            self.toggl_tasks[toggl_project['id']] = toggl_tasks
 
             # Fetch tasks from Odoo
             taskdomain = [
@@ -218,24 +289,28 @@ class TogglConnector(models.Model):
                 ('stage_id', 'in', task_types),
             ]
             if time_from:
+                 # Only sync tasks that are touched since the last run
                 taskdomain.append(('write_date', '>=', time_from))
 
             tasks = self.env['project.task'].search(taskdomain)
 
             for task in tasks:
-                # Create Toggl project from Odoo task
-                toggl_tid = self.create_toggl_project({
-                    'type': 'T',
+                # Create Toggl Task from Odoo task
+                toggl_tid = self.create_toggl_task({
                     'name': task.name,
+                    'pid': project.toggl_project_id,
                     'id': task.id,
-                    'client_id': client_id,
                     'toggl_id': task.toggl_task_id,
                 })
-                task.toggl_task_id=toggl_tid
+                # Update Toggl Task id to task in Odoo
+                # .sudo() because we are only touching the toggl_task_id-field...
+                task.sudo().write({
+                    'toggl_task_id': toggl_tid,
+                })
 
-    @api.one
     def archive_completed_projects(self):
         # Deactivate Toggl projects that are not active in Odoo anymore
+        self.ensure_one()
         self.toggl_api_init()
 
         # Active task types
@@ -251,10 +326,10 @@ class TogglConnector(models.Model):
             ])
 
             if not task:
-                response = self.update_project(toggl_project['id'], {
+                self.update_project(toggl_project['id'], {
                     'active': False,
                 })
-                logger.warning("Toggl: Deactivate project: %s" % toggl_project['name'])
+                logger.debug("Toggl: Deactivate project: %s" % toggl_project['name'])
 
     def get_task_types(self):
         # Return active task types (i.e. not filded in kanban view)
@@ -262,27 +337,26 @@ class TogglConnector(models.Model):
 
     def create_toggl_project(self, params):
         # Project name, including info about if it's a taks or a project and its Odoo id
-        project_name = "%s: %s [%s]" % (params['type'], params['name'], params['id'])
+        project_name = "%s [%s]" % (params['name'], params['id'])
 
         # Check if this project already exists in Toggl
         toggl_project = next(filter(lambda p: p['id']==params['toggl_id'], self.toggl_projects), None)
 
         if not toggl_project:
-            logger.warning("Toggl: Create project: %s" % project_name)
-            project = {
+            logger.debug("Toggl: Create project: %s" % project_name)
+            # Create Toggl project
+            response = self.create_project({
                 'name': project_name,
                 'wid': self.toggl_workspace_id,
                 'is_private': False,
                 'cid': params['client_id'],
-            }
-
-            # Create Toggl project
-            response = self.create_project(project)
+            })
+            self.toggl_projects.append(response)
             return response['id']
         elif (project_name != toggl_project['name'] or
-                ('cid' in toggl_project and toggl_project['cid'] != params['client_id']) or
+                (toggl_project.get('cid', 0) != params['client_id']) or
                 (not toggl_project['active'])):
-            logger.warning("Toggl: Update project: %s" % project_name)
+            logger.debug("Toggl: Update project: %s" % project_name)
             response = self.update_project(toggl_project['id'], {
                 'active': True,
                 'name': project_name,
@@ -291,6 +365,61 @@ class TogglConnector(models.Model):
             return response['id']
         else:
             return toggl_project['id']
+
+    def create_toggl_task(self, params):
+        # Task name, including info about if it's a taks or a project and its Odoo id
+        task_name = "%s [%s]" % (params['name'], params['id'])
+
+        # All Toggl tasks associated to this task's project
+        toggl_tasks = self.toggl_tasks[params['pid']]
+        toggl_task = None
+
+        # Check if this task already exists in Toggl
+        if toggl_tasks:
+            toggl_task = next(filter(lambda t: t['id']==params['toggl_id'], toggl_tasks), None)
+
+        if not toggl_task:
+            logger.debug("Toggl: Create task: %s" % task_name)
+            task = {
+                'name': task_name,
+                'pid': params['pid'],
+                'wid': self.toggl_workspace_id,
+            }
+
+            # Create Toggl task
+            response = self.create_task(task)
+            return response['id']
+        elif (task_name != toggl_task['name'] or
+                (not toggl_task['active'])):
+            logger.debug("Toggl: Update task: %s" % task_name)
+            response = self.update_task(toggl_task['id'], {
+                'active': True,
+                'name': task_name,
+            })
+            return response['id']
+        else:
+            return toggl_task['id']
+
+    def create_toggl_client(self, params):
+        # Check if client exists in Toggl
+        toggl_client = next(filter(lambda c: c['id']==params['toggl_id'], self.toggl_clients), None)
+
+        if not toggl_client:
+            logger.debug("Toggl: Create client: %s" % params['name'])
+            response = self.create_client({
+                'name': params['name'],
+                'wid': self.toggl_workspace_id,
+            })
+            self.toggl_clients.append(response)
+            return response['id']
+        elif params['name'] != toggl_client['name']:
+            logger.debug("Toggl: Update client: %s" % params['name'])
+            response = self.update_client(toggl_client['id'], {
+                'name': params['name'],
+            })
+            return response['id']
+        else:
+            return toggl_client['id']
 
     def toggl_api_init(self):
         # Initilaize Toggl API
@@ -352,12 +481,20 @@ class TogglConnector(models.Model):
     def project(self, project_id):
         return self.do_request('get', 'https://www.toggl.com/api/v8/projects/%s' % project_id)
 
+    def project_tasks(self, project_id):
+        return self.do_request('get', 'https://www.toggl.com/api/v8//projects/%s/tasks' % project_id)
+
     def detailed_report(self, params):
         return self.do_request('get', 'https://toggl.com/reports/api/v2/details/', params=params)
 
     def create_client(self, params):
         params = {'client': params}
         response = self.do_request('post', 'https://www.toggl.com/api/v8/clients', data=params)
+        return response['data']
+
+    def update_client(self, client_id, params):
+        params = {'client': params}
+        response = self.do_request('put', 'https://www.toggl.com/api/v8/clients/%s' % client_id, data=params)
         return response['data']
 
     def create_project(self, params):
@@ -368,4 +505,14 @@ class TogglConnector(models.Model):
     def update_project(self, project_id, params):
         params = {'project': params}
         response = self.do_request('put', 'https://www.toggl.com/api/v8/projects/%s' % project_id, data=params)
+        return response['data']
+
+    def create_task(self, params):
+        params = {'task': params}
+        response = self.do_request('post', 'https://www.toggl.com/api/v8/tasks', data=params)
+        return response['data']
+
+    def update_task(self, task_id, params):
+        params = {'task': params}
+        response = self.do_request('put', 'https://www.toggl.com/api/v8/tasks/%s' % task_id, data=params)
         return response['data']
