@@ -11,4 +11,16 @@
         <field name="doall" eval="False"/>
         <field name="active" eval="False"/>
     </record>
+
+    <record id="arcive_done_projects_tasks_toggl" model="ir.cron">
+        <field name="name">Toggl Connector: Archive done Projects and Tasks in Toggl</field>
+        <field name="model_id" ref="model_toggl_connector"/>
+        <field name="state">code</field>
+        <field name="code">model.archive_completed_tasks_projects_cron()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
 </odoo>

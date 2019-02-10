@@ -174,8 +174,9 @@ class TogglConnector(models.Model):
                     logger.warning("Toggl: Update time entry failed! %s" % (e))
         return synced_entries
 
-    @api.one
+    @api.multi
     def sync_projects_to_toggl_button(self):
+        self.ensure_one()
         user = self.env['res.users'].browse(self.env.uid)
         toggl = self.env['toggl.connector'].search([
             ('company_id', '=', user.company_id.id)
@@ -207,6 +208,16 @@ class TogglConnector(models.Model):
         # Sync projects and tasks
         toggl.sync_projects_to_toggl(time_from)
         toggl.sync_tasks_to_toggl(time_from)
+
+    @api.model
+    def archive_completed_tasks_projects_cron(self):
+        user = self.env['res.users'].browse(self.env.uid)
+        toggl = self.env['toggl.connector'].search([
+            ('company_id', '=', user.company_id.id)
+        ])
+
+        # Arcive completed
+        toggl.archive_completed_projects_tasks()
 
     def sync_projects_to_toggl(self, time_from=False):
         self.ensure_one()
@@ -315,7 +326,7 @@ class TogglConnector(models.Model):
                     'toggl_task_id': toggl_tid,
                 })
 
-    def archive_completed_projects(self):
+    def archive_completed_projects_tasks(self):
         # Deactivate Toggl projects that are not active in Odoo anymore
         self.ensure_one()
         self.toggl_api_init()
@@ -327,16 +338,36 @@ class TogglConnector(models.Model):
         toggl_projects = self.projects(self.toggl_workspace_id, 'true')
 
         for toggl_project in toggl_projects:
-            task = self.env['project.task'].search([
-                ('toggl_task_id', '=', toggl_project['id']),
-                ('stage_id', 'in', task_types),
-            ])
+            project = self.env['project.project'].search([
+                ('toggl_project_id', '=', toggl_project['id'])
+            ], limit=1)
 
-            if not task:
+            # Project not active in Odoo anymore, arcive it in Toggl too
+            # When project is archived it's tasks are also archived
+            if not project:
+                logger.warning("Toggl: Deactivate project: %s" % toggl_project['name'])
                 self.update_project(toggl_project['id'], {
                     'active': False,
                 })
-                logger.debug("Toggl: Deactivate project: %s" % toggl_project['name'])
+                continue
+
+            # Fetch project's tasks
+            toggl_tasks = self.project_tasks(project.toggl_project_id)
+            if not toggl_tasks:
+                continue
+
+            for toggl_task in toggl_tasks:
+                # Task not active in Odoo anymore, archive it in Toggl too
+                task = self.env['project.task'].search([
+                    ('toggl_task_id', '=', toggl_task['id']),
+                    ('stage_id', 'in', task_types),
+                ])
+
+                if not task:
+                    logger.warning("Toggl: Deactivate task: %s" % toggl_task['name'])
+                    self.update_task(toggl_task['id'], {
+                        'active': False,
+                    })
 
     def get_task_types(self):
         # Return active task types (i.e. not filded in kanban view)

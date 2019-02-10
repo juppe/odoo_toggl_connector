@@ -22,7 +22,9 @@ How to use this module:
 * Set up your Toggl Connector Settings. You need your Toggl workspace ID and the API token of an admin user in that workspace. ``(Settings --> Technical --> Toggl Connector Settings)``
     * Choose projects to skip, if you have projects you don't want to sync to Toggl
     * Choose a suitable default project for your Toggle time entries that are missing project info in Toggl.
-* Activate the Toggl Connector scheduled action to run at a frequency suitable to you. ``(Settings --> Technical --> Automation --> Scheduled Actions --> Toggl Connector: Sync Projects and Tasks to Toggl)``
+* Activate the Toggl Connector scheduled Actions to run at a frequency suitable to you. ``(Settings --> Technical --> Automation --> Scheduled Actions``
+    * The ``Toggl Connector: Sync Projects and Tasks to Toggl`` action will sync projects and tasks to Toggl
+    * The ``Toggl Connector: Archive done Projects and Tasks in Toggl`` action will archive project and tasks that are not active on Odoo anymore.
 * Set up your Toggl username in your Odoo user information. ``(Settings --> Users --> Your user --> Preferences --> Toggl API)``
 * Give user access to the Toggl Connector. ``(Settings --> Users --> Your user --> Application Accesses --> Toggl Connector)``
     * The 'Toggl Connector Manager' user access level can edit the Toggl Connector Settings.
