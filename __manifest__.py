@@ -9,12 +9,8 @@
 {
     'name': 'Odoo - Toggl Connector',
     'version': '0.1',
-    'license': 'Other proprietary',
+    'license': 'AGPL-3',
     'category': 'Timesheets',
-    'description': """Toggl Connector for Odoo.
-        Export projects and tasks from Odoo to Toggl time tracking app and
-        import timesheet entries from Toggl to Odoo.
-    """,
     'author': 'Johan Tötterman',
     'maintainer': 'Johan Tötterman',
     'website': 'http://www.sprintit.fi',
