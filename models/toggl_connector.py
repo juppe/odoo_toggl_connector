@@ -70,8 +70,9 @@ class TogglConnector(models.Model):
     toggl_projects = []
     toggl_tasks = {}
 
-    @api.one
+    @api.multi
     def sync_time_entries_from_toggl(self, date_from, date_to, update_entries):
+        self.ensure_one()
         user = self.env['res.users'].browse(self.env.uid)
         employee = self.env['hr.employee'].search([('user_id', '=', user.id)])
 
@@ -81,6 +82,9 @@ class TogglConnector(models.Model):
             raise Warning ('Please link your Odoo user to exactly one Employee.')
 
         self.toggl_api_init()
+
+        # Synced entries
+        synced_entries = []
 
         # Fetch all workspace users
         toggl_users = self.users(self.toggl_workspace_id)
@@ -158,14 +162,17 @@ class TogglConnector(models.Model):
             if not odoo_te:
                 # Create  time entry
                 logger.debug("Toggl: Create time entry: %s" % (timesheet['name']))
-                self.env['account.analytic.line'].create(timesheet)
+                entryid = self.env['account.analytic.line'].create(timesheet)
+                synced_entries.append(entryid.id)
             elif update_entries:
                 # Update time entry
                 logger.debug("Toggl: Update time entry: %s" % (timesheet['name']))
                 try:
                     odoo_te.write(timesheet)
+                    synced_entries.append(odoo_te.id)
                 except Exception as e:
                     logger.warning("Toggl: Update time entry failed! %s" % (e))
+        return synced_entries
 
     @api.one
     def sync_projects_to_toggl_button(self):

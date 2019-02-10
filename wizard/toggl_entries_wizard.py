@@ -44,14 +44,21 @@ class TogglWizard(models.TransientModel):
         if not toggl:
             raise Warning("No Toggl Settings defined for your company")
 
-        toggl.sync_time_entries_from_toggl(self.date_from, self.date_to, self.update_existing)
+        synced_entries = toggl.sync_time_entries_from_toggl(self.date_from, self.date_to, self.update_existing)
 
-        user.toggl_last_fetch = self.date_to
+        # Update toggl_last_fetch to user in Odoo
+        # .sudo() because we are only touching the toggl_last_fetch-field...
+        user.sudo().write({
+            'toggl_last_fetch': self.date_to,
+        })
 
         return {
-            'name': _('My Timesheets'),
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'res_model': 'account.analytic.line',
             'type': 'ir.actions.act_window',
+            'name': _('Imported / Updated Timesheets'),
+            'domain': [('id', 'in', synced_entries)],
+            'res_model': 'account.analytic.line',
+            'view_id': False,
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'target': 'current',
         }
