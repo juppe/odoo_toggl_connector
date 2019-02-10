@@ -9,7 +9,7 @@
 {
     'name': 'Odoo - Toggl Connector',
     'version': '0.1',
-    'license': 'AGPL-3',
+    'license': 'MIT License',
     'category': 'Timesheets',
     'author': 'Johan Tötterman',
     'maintainer': 'Johan Tötterman',
