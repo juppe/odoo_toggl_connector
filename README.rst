@@ -4,7 +4,7 @@ Toggl connector for Odoo version 11.0
 
 **This is software does two things:**
 
-1. It allows you to import time entries from `Toggl <https://www.toggl.com/app/timer>`_ as timesheet entries into `Odoo <https://www.odoo.com>`_
+1. It allows you to import time entries from `Toggl <https://api.track.toggl.com/app/timer>`_ as timesheet entries into `Odoo <https://www.odoo.com>`_
 2. It allows you to export your projects and tasks from Odoo to Toggl. (Only tasks beloning to a project are synced)
 
 **NOTE**: This software is designed for users using one of Toggl's paid workspaces. This software uses Toggl Tasks, and they are not available on the free tier. Toggl offers a 30 day trial, if you don't have a Starter, Premium or Enterprise workspace and want to try this out.

@@ -8,8 +8,8 @@
 
 {
     'name': 'Odoo - Toggl Connector',
-    'version': '0.1',
-    'license': 'MIT License',
+    'version': '14.0.0.0',
+    'license': 'GPL-3',
     'category': 'Timesheets',
     'author': 'Johan Tötterman',
     'maintainer': 'Johan Tötterman',
@@ -23,7 +23,7 @@
         'security/toggl_connector_security.xml',
         'security/ir.model.access.csv',
         'view/toggl_connector_view.xml',
-        'view/res_users.xml',
+        'view/hr_employee.xml',
         'wizard/toggl_entries_wizard_view.xml',
         'data/toggl_cron.xml',
     ],

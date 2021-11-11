@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_toggl_connector_user,toggl.connector.user,model_toggl_connector,odoo_toggl_connector.group_toggl_connector_user,1,0,0,0
 access_toggl_connector_manager,toggl.connector.manager,model_toggl_connector,odoo_toggl_connector.group_toggl_connector_manager,1,1,1,1
+access_toggl_wizard,access_toggl_wizard,model_toggl_wizard,odoo_toggl_connector.group_toggl_connector_user,1,1,1,1

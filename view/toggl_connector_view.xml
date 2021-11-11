@@ -22,6 +22,8 @@
                     <field name="name"/>
                     <field name="toggl_api_token"/>
                     <field name="toggl_workspace_id"/>
+                    <field name="subscription_type"/>
+                    <field name="toggl_api_url"/>
                     <field name="toggl_default_project"/>
                     <field name="toggl_skip_projects"/>
                 </group>
@@ -32,7 +34,6 @@
     <record id="toggl_connector_action" model="ir.actions.act_window">
         <field name="name">Toggl Connector</field>
         <field name="res_model">toggl.connector</field>
-        <field name="view_type">form</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="toggl_connector_tree_view"/>
     </record>

@@ -26,8 +26,10 @@ class TogglWizard(models.TransientModel):
     @api.model
     def _default_last_fetch(self):
         user = self.env['res.users'].browse(self.env.uid)
-        if user and user.toggl_last_fetch:
-            return user.toggl_last_fetch
+        employee = self.env['hr.employee'].search([('user_id', '=', user.id)])
+
+        if employee and employee.toggl_last_fetch:
+            return employee.toggl_last_fetch
 
     last_fetch = fields.Date('Last fetch', default=_default_last_fetch)
     update_existing = fields.Boolean('Update existing time entries', default=True)
@@ -37,6 +39,8 @@ class TogglWizard(models.TransientModel):
 
     def import_time_entries(self):
         user = self.env['res.users'].browse(self.env.uid)
+        employee = self.env['hr.employee'].search([('user_id', '=', user.id)])
+
         toggl = self.env['toggl.connector'].search([
             ('company_id', '=', user.company_id.id)
         ])
@@ -46,19 +50,18 @@ class TogglWizard(models.TransientModel):
 
         synced_entries = toggl.sync_time_entries_from_toggl(self.date_from, self.date_to, self.update_existing)
 
-        # Update toggl_last_fetch to user in Odoo
+        # Update toggl_last_fetch to emplyee in Odoo
         # .sudo() because we are only touching the toggl_last_fetch-field...
-        user.sudo().write({
+        employee.sudo().write({
             'toggl_last_fetch': self.date_to,
         })
 
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Imported / Updated Timesheets'),
+            'name': _('Imported Timesheets'),
             'domain': [('id', 'in', synced_entries)],
             'res_model': 'account.analytic.line',
             'view_id': False,
             'view_mode': 'tree,form',
-            'view_type': 'form',
             'target': 'current',
         }

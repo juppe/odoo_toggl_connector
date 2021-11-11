@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="toggl_hr_employee_additions" model="ir.ui.view">
+        <field name="name">toggl.hr.employee.additions</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='coach_id']" position="after">
+                <field name="toggl_username" groups="odoo_toggl_connector.group_toggl_connector_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

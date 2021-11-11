@@ -25,7 +25,6 @@
     <record id="toggl_wizard_action" model="ir.actions.act_window">
         <field name="name">Import Toggl Time Entries</field>
         <field name="res_model">toggl.wizard</field>
-        <field name="view_type">form</field>
         <field name="view_mode">tree,form</field>
         <field name="target">new</field>
         <field name="view_id" ref="toggl_wizard_form_view"/>
